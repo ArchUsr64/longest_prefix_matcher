@@ -1,3 +1,5 @@
+// TODO: Implement HashMap solution
+// Usable TUI using tui-rs
 #[derive(Debug, Clone)]
 struct BinaryTrie {
     filled: bool,
@@ -31,6 +33,9 @@ impl LinearLookup<'_> {
 trait LookUpTable<'table> {
     fn insert(&mut self, value: &'table [bool]);
     fn search<'a>(&'a self, value: &'a [bool]) -> &[bool];
+    fn delete(&mut self, _: &'table [bool]) {
+        todo!()
+    }
 }
 
 impl LookUpTable<'_> for BinaryTrie {
@@ -116,22 +121,44 @@ fn bool_vec_from_str(value: &str) -> Vec<bool> {
     result
 }
 
+fn str_from_bool_slice(value: &[bool]) -> String {
+    let mut result = String::with_capacity(value.len());
+    for bit in value.iter().rev() {
+        result.push(if *bit { '1' } else { '0' });
+    }
+    result
+}
+
+use std::io::{self, Write};
 fn main() {
     let mut trie = BinaryTrie::new();
-    let mut vec = LinearLookup::new();
-    let entries = [
-        &bool_vec_from_str("01"),
-        &bool_vec_from_str("00"),
-        &bool_vec_from_str("11"),
-        &bool_vec_from_str("10"),
-    ];
-    let key = bool_vec_from_str("1011");
-    for entry in entries {
-        trie.insert(entry);
-        vec.insert(entry);
+    loop {
+        print!("Enter Command: ");
+        if let Err(e) = io::stdout().flush() {
+            println!("[Failed to write to STDOUT] {e:?}");
+            continue;
+        };
+        let mut buffer = String::new();
+        if let Err(e) = io::stdin().read_line(&mut buffer) {
+            println!("[Failed to read from STDIN] {e:?}");
+            continue;
+        };
+        let parsed: Vec<_> = buffer.split_whitespace().collect();
+        let command = parsed[0].to_lowercase();
+        let value = parsed[1];
+        let value = bool_vec_from_str(value);
+        match command.as_str() {
+            "insert" | "i" => {
+                trie.insert(&value);
+                println!("Value successfully inserted");
+            }
+            "search" | "s" => {
+                let result = trie.search(&value);
+                println!("Longest matching prefix: {}", str_from_bool_slice(result));
+            }
+            _ => println!("[Invalid Command] '{command}' is invalid"),
+        }
     }
-    println!("Trie  :\t{:?}", trie.search(&key));
-    println!("Linear:\t{:?}", vec.search(&key));
 }
 
 #[test]
