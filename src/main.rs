@@ -133,3 +133,31 @@ fn main() {
     println!("Trie  :\t{:?}", trie.search(&key));
     println!("Linear:\t{:?}", vec.search(&key));
 }
+
+#[test]
+fn trie_searching() {
+    let mut trie = BinaryTrie::new();
+    let entries = [
+        &bool_vec_from_str("0"),
+        &bool_vec_from_str("1"),
+        &bool_vec_from_str("01"),
+        &bool_vec_from_str("00"),
+        &bool_vec_from_str("10"),
+        &bool_vec_from_str("110"),
+        &bool_vec_from_str("00001001"),
+    ];
+    for entry in entries {
+        trie.insert(entry);
+    }
+    let test = |test_case, longest_matching_prefix| {
+        assert_eq!(
+            trie.search(&bool_vec_from_str(test_case)),
+            bool_vec_from_str(longest_matching_prefix)
+        )
+    };
+    test("11", "1");
+    test("000", "00");
+    test("1101", "110");
+    test("1101010", "110");
+    test("00001001001", "00001001");
+}
