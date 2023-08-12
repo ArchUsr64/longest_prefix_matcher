@@ -47,11 +47,6 @@ impl LookUpTable<'_> for BinaryTrie {
                     &mut Some(ref mut child) => child.insert(rest),
                     &mut None => {
                         let mut new_child = Self::new();
-                        if take_left {
-                            new_child.left = Some(Box::new(new_child.clone()));
-                        } else {
-                            new_child.right = Some(Box::new(new_child.clone()));
-                        }
                         new_child.insert(rest);
                         *target_node = Some(Box::new(new_child));
                     }
