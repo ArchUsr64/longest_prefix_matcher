@@ -48,6 +48,22 @@ impl BinaryTrie {
             }
         }
     }
+    fn search<'a>(&'a self, value: &'a [bool]) -> &[bool] {
+        let mut node = self;
+        let mut best_match = 0;
+        for (i, bit) in value.iter().enumerate() {
+            let take_left = !*bit;
+            if node.filled {
+                best_match = i;
+            }
+            let target_node = if take_left { &node.left } else { &node.right };
+            match target_node {
+                Some(ref x) => node = x,
+                None => break,
+            }
+        }
+        &value[..best_match]
+    }
 }
 
 fn bool_slice_from_str(value: &str) -> Vec<bool> {
@@ -65,5 +81,10 @@ fn bool_slice_from_str(value: &str) -> Vec<bool> {
 fn main() {
     let mut root = BinaryTrie::new();
     root.insert(&bool_slice_from_str("10010"));
+    root.insert(&bool_slice_from_str("00"));
+    root.insert(&bool_slice_from_str("1010"));
+    root.insert(&bool_slice_from_str("110"));
+    root.insert(&bool_slice_from_str("101000"));
     println!("{root:#?}");
+    println!("{:?}", root.search(&bool_slice_from_str("101000")));
 }
