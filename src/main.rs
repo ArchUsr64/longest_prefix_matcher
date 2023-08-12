@@ -15,12 +15,25 @@ impl BinaryTrie {
     }
 }
 
-trait LookUpTable {
-    fn insert(&mut self, value: &[bool]);
+// TODO: Can lookup time be optimised using binary search over lexicographically sorted entries
+struct LinearLookup<'a> {
+    entries: Vec<&'a [bool]>,
+}
+
+impl LinearLookup<'_> {
+    fn new() -> Self {
+        Self {
+            entries: Vec::new(),
+        }
+    }
+}
+
+trait LookUpTable<'table> {
+    fn insert(&mut self, value: &'table [bool]);
     fn search<'a>(&'a self, value: &'a [bool]) -> &[bool];
 }
 
-impl LookUpTable for BinaryTrie {
+impl LookUpTable<'_> for BinaryTrie {
     fn insert(&mut self, value: &[bool]) {
         match value.split_first() {
             Some((first, rest)) => {
@@ -51,11 +64,11 @@ impl LookUpTable for BinaryTrie {
     }
     fn search<'a>(&'a self, value: &'a [bool]) -> &[bool] {
         let mut node_to_search = self;
-        let mut best_match_index = 0;
+        let mut last_match_depth = 0;
         for (depth, bit) in value.iter().enumerate() {
             let take_left = !*bit;
             if node_to_search.filled {
-                best_match_index = depth;
+                last_match_depth = depth;
             }
             let target_node = if take_left {
                 &node_to_search.left
@@ -67,11 +80,36 @@ impl LookUpTable for BinaryTrie {
                 None => break,
             }
         }
-        &value[..best_match_index]
+        &value[..last_match_depth]
     }
 }
 
-fn bool_slice_from_str(value: &str) -> Vec<bool> {
+impl<'table> LookUpTable<'table> for LinearLookup<'table> {
+    fn insert(&mut self, value: &'table [bool]) {
+        if !self.entries.contains(&value) {
+            self.entries.push(value);
+        }
+    }
+    fn search<'a>(&'a self, value: &'a [bool]) -> &[bool] {
+        let mut best_match_index = 0;
+        for entry in self.entries.iter() {
+            let mut matched_till = 0;
+            for (i, bit) in entry.iter().enumerate() {
+                match value.get(i) {
+                    Some(test_bit) if test_bit == bit => (),
+                    _ => break,
+                }
+                matched_till = i;
+            }
+            if matched_till > best_match_index {
+                best_match_index = matched_till;
+            }
+        }
+        &value[..=best_match_index]
+    }
+}
+
+fn bool_vec_from_str(value: &str) -> Vec<bool> {
     let mut result = Vec::with_capacity(value.len());
     value.chars().for_each(|char| {
         result.push(match char {
@@ -84,12 +122,19 @@ fn bool_slice_from_str(value: &str) -> Vec<bool> {
 }
 
 fn main() {
-    let mut root = BinaryTrie::new();
-    root.insert(&bool_slice_from_str("10010"));
-    root.insert(&bool_slice_from_str("00"));
-    root.insert(&bool_slice_from_str("1010"));
-    root.insert(&bool_slice_from_str("110"));
-    root.insert(&bool_slice_from_str("101000"));
-    println!("{root:#?}");
-    println!("{:?}", root.search(&bool_slice_from_str("101000")));
+    let mut trie = BinaryTrie::new();
+    let mut vec = LinearLookup::new();
+    let entries = [
+        &bool_vec_from_str("01"),
+        &bool_vec_from_str("00"),
+        &bool_vec_from_str("11"),
+        &bool_vec_from_str("10"),
+    ];
+    let key = bool_vec_from_str("1011");
+    for entry in entries {
+        trie.insert(entry);
+        vec.insert(entry);
+    }
+    println!("Trie  :\t{:?}", trie.search(&key));
+    println!("Linear:\t{:?}", vec.search(&key));
 }
