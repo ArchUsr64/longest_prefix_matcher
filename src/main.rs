@@ -13,6 +13,14 @@ impl BinaryTrie {
             right: None,
         }
     }
+}
+
+trait LookUpTable {
+    fn insert(&mut self, value: &[bool]);
+    fn search<'a>(&'a self, value: &'a [bool]) -> &[bool];
+}
+
+impl LookUpTable for BinaryTrie {
     fn insert(&mut self, value: &[bool]) {
         match value.split_first() {
             Some((first, rest)) => {
