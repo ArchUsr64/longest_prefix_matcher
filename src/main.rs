@@ -22,14 +22,6 @@ struct LinearLookup<'a> {
     entries: Vec<&'a [bool]>,
 }
 
-impl LinearLookup<'_> {
-    fn new() -> Self {
-        Self {
-            entries: Vec::new(),
-        }
-    }
-}
-
 trait LookUpTable<'table> {
     fn insert(&mut self, value: &'table [bool]);
     fn search<'a>(&'a self, value: &'a [bool]) -> &[bool];
@@ -129,9 +121,29 @@ fn str_from_bool_slice(value: &[bool]) -> String {
     result
 }
 
+fn print_formatted_table(table: &[Vec<bool>], longest_sequence_length: usize) {
+    println!("Longest: {longest_sequence_length}");
+    print!("┌");
+    (0..longest_sequence_length).for_each(|_| print!("─"));
+    println!("┐");
+    for row in table {
+        print!("│");
+        for bit in row {
+            print!("{}", if *bit { 1 } else { 0 });
+        }
+        (0..(longest_sequence_length - row.len())).for_each(|_| print!(" "));
+        println!("│");
+    }
+    print!("└");
+    (0..longest_sequence_length).for_each(|_| print!("─"));
+    println!("┘");
+}
+
 use std::io::{self, Write};
 fn main() {
+    let mut table = Vec::new();
     let mut trie = BinaryTrie::new();
+    let mut longest_sequence_length = 0;
     loop {
         print!("Enter Command: ");
         if let Err(e) = io::stdout().flush() {
@@ -149,8 +161,10 @@ fn main() {
         let value = bool_vec_from_str(value);
         match command.as_str() {
             "insert" | "i" => {
+                longest_sequence_length = longest_sequence_length.max(value.len());
                 trie.insert(&value);
-                println!("Value successfully inserted");
+                table.push(value);
+                print_formatted_table(&table, longest_sequence_length);
             }
             "search" | "s" => {
                 let result = trie.search(&value);
@@ -159,6 +173,18 @@ fn main() {
             _ => println!("[Invalid Command] '{command}' is invalid"),
         }
     }
+}
+
+#[test]
+fn table_fmt() {
+    let table = [
+        vec![true, false, true, true, false],
+        vec![true, false, true, true, false],
+        vec![true, false, true, true, false],
+        vec![false, true, true, false],
+    ];
+    print_formatted_table(&table, 5);
+    panic!();
 }
 
 #[test]
