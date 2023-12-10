@@ -1,3 +1,5 @@
+const STRID_SIZE: usize = 3;
+
 // TODO: Implement HashMap solution
 // Usable TUI using tui-rs
 #[derive(Debug, Clone)]
@@ -13,6 +15,47 @@ impl BinaryTrie {
             filled: false,
             left: None,
             right: None,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+struct MultiBitTrie {
+    stride: usize,
+    filled: bool,
+    children: [Option<Box<Self>>; 2usize.pow(STRID_SIZE as u32)],
+}
+
+impl MultiBitTrie {
+    fn new() -> Self {
+        MultiBitTrie {
+            stride: STRID_SIZE,
+            filled: false,
+            children: [None, None, None, None, None, None, None, None],
+        }
+    }
+    fn insert(&mut self, value: &[bool]) {
+        let bits_to_stuff = value.len() % STRID_SIZE;
+        if bits_to_stuff != 0 {
+            let int_to_bool_arr = |int: usize| -> Vec<bool> {
+                let mut result = Vec::new();
+                let mut int = int;
+                while int > 0 {
+                    result.push(int % 2 == 1);
+                    int >>= 1;
+                }
+                result
+            };
+            let value_as_int: usize = value
+                .iter()
+                .enumerate()
+                .map(|(i, bit)| (*bit as usize) << i)
+                .sum();
+            (0..2usize.pow(bits_to_stuff as u32)).for_each(|i| {
+                let int_to_parse = value_as_int << bits_to_stuff + i;
+                let stuffed_vec = int_to_bool_arr(int_to_parse);
+                self.insert(&stuffed_vec);
+            });
         }
     }
 }
